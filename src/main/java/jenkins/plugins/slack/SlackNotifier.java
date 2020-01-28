@@ -1,7 +1,31 @@
 package jenkins.plugins.slack;
 
+import static java.util.Collections.singletonList;
+
+import java.util.NoSuchElementException;
+import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Stream;
+
+import javax.annotation.Nonnull;
+
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.HostnameRequirement;
+
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
+import org.jenkinsci.plugins.plaincredentials.StringCredentials;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.verb.POST;
+
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.DescriptorExtensionList;
 import hudson.EnvVars;
@@ -20,36 +44,16 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import java.util.NoSuchElementException;
-import java.util.function.Function;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
-import jenkins.plugins.slack.config.GlobalCredentialMigrator;
-import jenkins.plugins.slack.logging.BuildAwareLogger;
-import jenkins.plugins.slack.logging.BuildKey;
-import jenkins.plugins.slack.logging.SlackNotificationsLogger;
-import jenkins.plugins.slack.matrix.MatrixTriggerMode;
-import jenkins.plugins.slack.user.SlackUserIdResolver;
-import jenkins.plugins.slack.user.SlackUserIdResolverDescriptor;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.Symbol;
-import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
-import org.jenkinsci.plugins.plaincredentials.StringCredentials;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.verb.POST;
-
-import static java.util.Collections.singletonList;
+import src.main.java.jenkins.plugins.slack.config.GlobalCredentialMigrator;
+import src.main.java.jenkins.plugins.slack.logging.BuildAwareLogger;
+import src.main.java.jenkins.plugins.slack.logging.BuildKey;
+import src.main.java.jenkins.plugins.slack.logging.SlackNotificationsLogger;
+import src.main.java.jenkins.plugins.slack.matrix.MatrixTriggerMode;
+import src.main.java.jenkins.plugins.slack.user.SlackUserIdResolver;
+import src.main.java.jenkins.plugins.slack.user.SlackUserIdResolverDescriptor;
 
 public class SlackNotifier extends Notifier {
 
@@ -558,7 +562,9 @@ public class SlackNotifier extends Notifier {
         teamDomain = env.expand(teamDomain);
         authToken = env.expand(authToken);
         authTokenCredentialId = env.expand(authTokenCredentialId);
+        listener.getLogger().println("Slack room before expand: " + room);
         room = env.expand(room);
+        listener.getLogger().println("Slack room after expand: " + room);
         final String populatedToken = CredentialsObtainer.getTokenToUse(authTokenCredentialId, abstractBuild.getParent(), authToken);
         return new StandardSlackService(
                 new StandardSlackServiceBuilder()
